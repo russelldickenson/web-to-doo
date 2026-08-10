@@ -1,11 +1,11 @@
-# Microsoft To Do Clone - Agent Guidelines
+# To Do - Agent Guidelines
 
 This file defines the project architecture, constraints, state management patterns, and guidelines for AI agents working on this repository.
 
 ---
 
 ## 1. Project Overview & Tech Stack
-This project is a client-side clone of Microsoft To Do. It is a single-page application with no backend dependencies.
+This project is a client-side version of To Do. It is a single-page application with no backend dependencies.
 - **Markup**: Semantic HTML5 in [`index.html`](file:///Users/russell/personal/repos/web-todo-like-mstodo/index.html)
 - **Styling**: Vanilla CSS in [`style.css`](file:///Users/russell/personal/repos/web-todo-like-mstodo/style.css). Features a modern, vibrant blue design with hover transitions and micro-animations.
 - **Logic**: Pure client-side JavaScript in [`app.js`](file:///Users/russell/personal/repos/web-todo-like-mstodo/app.js)
@@ -13,7 +13,7 @@ This project is a client-side clone of Microsoft To Do. It is a single-page appl
 ---
 
 ## 2. State & Persistence
-All data is stored in the browser's `localStorage` under the key `ms_todo_clone_state`.
+All data is stored in the browser's `localStorage` under the key `ms_todo_state`.
 - **State Object Structure**:
   ```javascript
   const state = {

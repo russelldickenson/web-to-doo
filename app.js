@@ -1,20 +1,28 @@
 // Application State and Persistence
-const STORAGE_KEY = 'ms_todo_clone_state';
+const OLD_STORAGE_KEY = 'ms_todo_clone_state';
+const STORAGE_KEY = 'ms_todo_state';
+
+// Migrate legacy state if present
+if (!localStorage.getItem(STORAGE_KEY) && localStorage.getItem(OLD_STORAGE_KEY)) {
+  localStorage.setItem(STORAGE_KEY, localStorage.getItem(OLD_STORAGE_KEY));
+  localStorage.removeItem(OLD_STORAGE_KEY);
+}
 
 const defaultState = {
   lists: [
-    { id: 'tasks', name: 'Tasks', theme: 'theme-default', isDefault: true },
+    { id: 'tasks', name: 'All', theme: 'theme-default', isDefault: true },
     { id: 'personal', name: 'Personal 🏠', theme: 'theme-default', isDefault: false },
     { id: 'work', name: 'Work 💼', theme: 'theme-default', isDefault: false }
   ],
   todos: [
-    { id: 'todo-1', listId: 'tasks', text: 'Welcome to Microsoft To Do! 🌟', completed: false, starred: true, createdAt: Date.now() - 3600000 },
-    { id: 'todo-2', listId: 'tasks', text: 'Double-click/click this task title to edit inline ✏️', completed: false, starred: false, createdAt: Date.now() - 1800000 },
-    { id: 'todo-3', listId: 'personal', text: 'Buy fresh groceries', completed: false, starred: false, createdAt: Date.now() },
-    { id: 'todo-4', listId: 'work', text: 'Schedule product review session', completed: true, starred: true, createdAt: Date.now() - 7200000 }
+    { id: 'todo-1', listId: 'tasks', text: 'Welcome to To Do! 🌟', completed: false, starred: true, createdAt: Date.now() - 3600000, steps: [] },
+    { id: 'todo-2', listId: 'tasks', text: 'Double-click/click this task title to edit inline ✏️', completed: false, starred: false, createdAt: Date.now() - 1800000, steps: [] },
+    { id: 'todo-3', listId: 'personal', text: 'Buy fresh groceries', completed: false, starred: false, createdAt: Date.now(), steps: [] },
+    { id: 'todo-4', listId: 'work', text: 'Schedule product review session', completed: true, starred: true, createdAt: Date.now() - 7200000, steps: [] }
   ],
   activeListId: 'tasks',
   editingTodoId: null,
+  selectedTodoId: null,
   searchQuery: ''
 };
 
@@ -29,6 +37,20 @@ function loadState() {
       if (parsed && Array.isArray(parsed.lists) && Array.isArray(parsed.todos)) {
         parsed.searchQuery = '';
         parsed.editingTodoId = null;
+        parsed.selectedTodoId = null; // Close detail panel on reload/fresh start
+        
+        // Migrate legacy default list name from Tasks to All
+        parsed.lists.forEach(l => {
+          if (l.id === 'tasks' && l.name === 'Tasks') {
+            l.name = 'All';
+          }
+        });
+
+        // Ensure steps is defined on all loaded todos
+        parsed.todos.forEach(t => {
+          if (!t.steps) t.steps = [];
+        });
+
         // Verify activeListId exists, otherwise reset to default
         const listExists = parsed.lists.some(l => l.id === parsed.activeListId) || parsed.activeListId === 'important';
         if (!listExists) {
@@ -80,6 +102,20 @@ const completedBadge = document.getElementById('completedBadge');
 const completedTodoList = document.getElementById('completedTodoList');
 const emptyState = document.getElementById('emptyState');
 
+// Detail Panel DOM Elements Cache
+const detailPanel = document.getElementById('detailPanel');
+const detailCloseBtn = document.getElementById('detailCloseBtn');
+const detailProgressContainer = document.getElementById('detailProgressContainer');
+const detailProgressBar = document.getElementById('detailProgressBar');
+const detailTodoCheckbox = document.getElementById('detailTodoCheckbox');
+const detailTodoText = document.getElementById('detailTodoText');
+const detailStarBtn = document.getElementById('detailStarBtn');
+const detailStepsList = document.getElementById('detailStepsList');
+const newStepForm = document.getElementById('newStepForm');
+const newStepInput = document.getElementById('newStepInput');
+const detailCreatedDate = document.getElementById('detailCreatedDate');
+const detailDeleteTaskBtn = document.getElementById('detailDeleteTaskBtn');
+
 // Modals
 const deleteConfirmModal = document.getElementById('deleteConfirmModal');
 const deleteCancelBtn = document.getElementById('deleteCancelBtn');
@@ -106,7 +142,7 @@ function addNewTodo() {
 
   const id = 'todo-' + Date.now();
   
-  // Microsoft To Do: Adding task in "Important" puts it in Tasks & stars it
+  // To Do: Adding task in "Starred" puts it in All & stars it
   let targetListId = state.activeListId;
   let starredState = false;
   
@@ -121,7 +157,8 @@ function addNewTodo() {
     text: text,
     completed: false,
     starred: starredState,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    steps: []
   });
 
   newTodoInput.value = '';
@@ -143,6 +180,7 @@ function setupEventListeners() {
   // Search input change handler
   searchInput.addEventListener('input', (e) => {
     state.searchQuery = e.target.value;
+    state.selectedTodoId = null; // Close detail panel when searching
     renderWorkspace();
   });
 
@@ -312,6 +350,90 @@ function setupEventListeners() {
       }
     }
   });
+
+  // Detail Panel Listeners
+  detailCloseBtn.addEventListener('click', () => {
+    state.selectedTodoId = null;
+    saveState();
+    render();
+  });
+
+  detailTodoCheckbox.addEventListener('click', () => {
+    if (!state.selectedTodoId) return;
+    const todo = state.todos.find(t => t.id === state.selectedTodoId);
+    if (todo) {
+      todo.completed = !todo.completed;
+      saveState();
+      render();
+    }
+  });
+
+  detailStarBtn.addEventListener('click', () => {
+    if (!state.selectedTodoId) return;
+    const todo = state.todos.find(t => t.id === state.selectedTodoId);
+    if (todo) {
+      todo.starred = !todo.starred;
+      saveState();
+      render();
+    }
+  });
+
+  detailTodoText.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      detailTodoText.blur();
+    }
+  });
+
+  detailTodoText.addEventListener('blur', () => {
+    if (!state.selectedTodoId) return;
+    const todo = state.todos.find(t => t.id === state.selectedTodoId);
+    const val = detailTodoText.value.trim();
+    if (todo && val && val !== todo.text) {
+      todo.text = val;
+      saveState();
+      render();
+    } else if (todo) {
+      detailTodoText.value = todo.text;
+    }
+  });
+
+  detailTodoText.addEventListener('input', () => {
+    detailTodoText.style.height = 'auto';
+    detailTodoText.style.height = detailTodoText.scrollHeight + 'px';
+  });
+
+  detailDeleteTaskBtn.addEventListener('click', () => {
+    if (!state.selectedTodoId) return;
+    const todo = state.todos.find(t => t.id === state.selectedTodoId);
+    if (!todo) return;
+    showDeleteConfirmModal(todo.text).then(confirmed => {
+      if (confirmed) {
+        state.todos = state.todos.filter(t => t.id !== todo.id);
+        state.selectedTodoId = null;
+        saveState();
+        render();
+      }
+    });
+  });
+
+  newStepForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = newStepInput.value.trim();
+    if (!val || !state.selectedTodoId) return;
+    const todo = state.todos.find(t => t.id === state.selectedTodoId);
+    if (todo) {
+      if (!todo.steps) todo.steps = [];
+      todo.steps.push({
+        id: 'step-' + Date.now(),
+        text: val,
+        completed: false
+      });
+      newStepInput.value = '';
+      saveState();
+      renderDetailPanel();
+    }
+  });
 }
 
 function moveTodoToList(todoId, targetListId) {
@@ -332,6 +454,7 @@ function moveTodoToList(todoId, targetListId) {
 function setActiveList(listId) {
   state.activeListId = listId;
   state.editingTodoId = null; // reset edits
+  state.selectedTodoId = null; // close detail panel on list change
   saveState();
   render();
 
@@ -455,6 +578,7 @@ function closeMoveTaskModal(targetListId) {
 function render() {
   renderSidebar();
   renderWorkspace();
+  renderDetailPanel();
 }
 
 function renderSidebar() {
@@ -531,7 +655,7 @@ function renderWorkspace() {
   // Determine header attributes
   const isCustomList = !['tasks', 'important'].includes(state.activeListId);
   
-  let listName = 'Tasks';
+  let listName = 'All';
   const isSearching = state.searchQuery && state.searchQuery.trim() !== '';
   
   if (isSearching) {
@@ -546,7 +670,7 @@ function renderWorkspace() {
     listSubtitle.textContent = '';
     listSubtitle.style.display = 'none';
     if (state.activeListId === 'important') {
-      listName = 'Important';
+      listName = 'Starred';
       editListTitleBtn.style.display = 'none';
       deleteListBtn.style.display = 'none';
     } else {
@@ -634,7 +758,7 @@ function renderWorkspace() {
 // Create a DOM node element for a single Todo item card
 function createTodoDOM(todo) {
   const li = document.createElement('li');
-  li.className = `todo-item ${todo.completed ? 'completed' : ''} ${todo.starred ? 'starred' : ''}`;
+  li.className = `todo-item ${todo.completed ? 'completed' : ''} ${todo.starred ? 'starred' : ''} ${state.selectedTodoId === todo.id ? 'selected' : ''}`;
   li.dataset.todoId = todo.id;
 
   // HTML5 Drag and Drop Handlers
@@ -659,6 +783,8 @@ function createTodoDOM(todo) {
       li.draggable = false;
     }
   });
+
+
 
   // Drag handle element
   const handleDiv = document.createElement('div');
@@ -692,7 +818,7 @@ function createTodoDOM(todo) {
   });
   li.appendChild(checkboxDiv);
 
-  // Content wrapper (Text or Editor Input + list badge)
+  // Content wrapper (Text or Editor Input + list badge + steps indicator)
   const wrapper = document.createElement('div');
   wrapper.className = 'todo-content-wrapper';
 
@@ -741,7 +867,12 @@ function createTodoDOM(todo) {
     wrapper.appendChild(textSpan);
   }
 
-  // Show list badge when in "Important" smart list or when search is active (tells where task belongs)
+  // Create badges container
+  const badgesContainer = document.createElement('div');
+  badgesContainer.className = 'todo-badges-container';
+  let hasBadges = false;
+
+  // Show list badge when in "Starred" smart list or when search is active (tells where task belongs)
   const isSearching = state.searchQuery && state.searchQuery.trim() !== '';
   if (state.activeListId === 'important' || isSearching) {
     const list = state.lists.find(l => l.id === todo.listId);
@@ -752,9 +883,17 @@ function createTodoDOM(todo) {
         badge.classList.add('search-result-badge');
       }
       badge.textContent = list.name;
-      wrapper.appendChild(badge);
+      badgesContainer.appendChild(badge);
+      hasBadges = true;
     }
   }
+
+
+
+  if (hasBadges) {
+    wrapper.appendChild(badgesContainer);
+  }
+
   li.appendChild(wrapper);
 
   // Hover Actions panel
@@ -775,6 +914,10 @@ function createTodoDOM(todo) {
     showMoveTaskModal(todo).then(targetListId => {
       if (targetListId) {
         todo.listId = targetListId;
+        // Close detail panel if moving the currently selected task
+        if (state.selectedTodoId === todo.id) {
+          state.selectedTodoId = null;
+        }
         saveState();
         render();
       }
@@ -797,6 +940,10 @@ function createTodoDOM(todo) {
     showDeleteConfirmModal(todo.text).then(confirmed => {
       if (confirmed) {
         state.todos = state.todos.filter(t => t.id !== todo.id);
+        // Close detail panel if deleting the currently selected task
+        if (state.selectedTodoId === todo.id) {
+          state.selectedTodoId = null;
+        }
         saveState();
         render();
       }
@@ -823,6 +970,32 @@ function createTodoDOM(todo) {
   });
   li.appendChild(starBtn);
 
+  // Subtasks/Details Panel Toggle Button
+  const detailsBtn = document.createElement('button');
+  detailsBtn.className = 'details-trigger-btn';
+  detailsBtn.title = 'Show task details & subtasks';
+  detailsBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="8" y1="6" x2="21" y2="6"></line>
+      <line x1="8" y1="12" x2="21" y2="12"></line>
+      <line x1="8" y1="18" x2="21" y2="18"></line>
+      <line x1="3" y1="6" x2="3.01" y2="6"></line>
+      <line x1="3" y1="12" x2="3.01" y2="12"></line>
+      <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </svg>
+  `;
+  detailsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state.selectedTodoId === todo.id) {
+      state.selectedTodoId = null;
+    } else {
+      state.selectedTodoId = todo.id;
+    }
+    saveState();
+    render();
+  });
+  li.appendChild(detailsBtn);
+
   return li;
 }
 
@@ -837,6 +1010,143 @@ function saveInlineEdit(id, newText) {
     }
   }
   renderWorkspace();
+}
+
+
+
+function renderDetailPanel() {
+  if (!state.selectedTodoId) {
+    detailPanel.classList.add('hidden');
+    // Remove highlighted selected item in main list
+    document.querySelectorAll('.todo-item').forEach(item => item.classList.remove('selected'));
+    return;
+  }
+
+  const todo = state.todos.find(t => t.id === state.selectedTodoId);
+  if (!todo) {
+    state.selectedTodoId = null;
+    detailPanel.classList.add('hidden');
+    saveState();
+    return;
+  }
+
+  detailPanel.classList.remove('hidden');
+
+  // Highlight selected task in main checklist
+  document.querySelectorAll('.todo-item').forEach(item => {
+    if (item.dataset.todoId === todo.id) {
+      item.classList.add('selected');
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+
+  // Render steps header progress bar
+  if (todo.steps && todo.steps.length > 0) {
+    const total = todo.steps.length;
+    const completed = todo.steps.filter(s => s.completed).length;
+    const percentage = Math.round((completed / total) * 100);
+    detailProgressBar.style.width = `${percentage}%`;
+    detailProgressContainer.style.display = 'block';
+  } else {
+    detailProgressBar.style.width = '0%';
+    detailProgressContainer.style.display = 'none';
+  }
+
+  // Render Parent Card elements in detail view
+  const detailCard = document.querySelector('.detail-todo-card');
+  if (todo.completed) {
+    detailCard.classList.add('completed');
+  } else {
+    detailCard.classList.remove('completed');
+  }
+
+  if (todo.starred) {
+    detailCard.classList.add('starred');
+  } else {
+    detailCard.classList.remove('starred');
+  }
+
+  detailTodoText.value = todo.text;
+  // Trigger height auto-resize for title textarea
+  detailTodoText.style.height = 'auto';
+  detailTodoText.style.height = detailTodoText.scrollHeight + 'px';
+
+  // Format creation date
+  const dateOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+  const createdDateStr = new Date(todo.createdAt).toLocaleDateString(undefined, dateOptions);
+  detailCreatedDate.textContent = `Created on ${createdDateStr}`;
+
+  // Render Subtasks list
+  detailStepsList.innerHTML = '';
+  if (!todo.steps) todo.steps = [];
+
+  todo.steps.forEach(step => {
+    const li = document.createElement('li');
+    li.className = `step-item ${step.completed ? 'completed' : ''}`;
+    li.dataset.stepId = step.id;
+
+    // Checkbox
+    const checkbox = document.createElement('div');
+    checkbox.className = 'step-checkbox';
+    checkbox.innerHTML = `
+      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    `;
+    checkbox.addEventListener('click', () => {
+      step.completed = !step.completed;
+      saveState();
+      renderDetailPanel();
+    });
+    li.appendChild(checkbox);
+
+    // Text Input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'step-text-input';
+    input.value = step.text;
+    input.placeholder = 'Step description';
+    
+    // Save step on blur or enter key
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        input.blur();
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      const val = input.value.trim();
+      if (!val) {
+        // Delete if empty
+        todo.steps = todo.steps.filter(s => s.id !== step.id);
+      } else {
+        step.text = val;
+      }
+      saveState();
+      renderDetailPanel();
+    });
+    li.appendChild(input);
+
+    // Delete Button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'step-delete-btn';
+    deleteBtn.title = 'Delete step';
+    deleteBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    `;
+    deleteBtn.addEventListener('click', () => {
+      todo.steps = todo.steps.filter(s => s.id !== step.id);
+      saveState();
+      renderDetailPanel();
+    });
+    li.appendChild(deleteBtn);
+
+    detailStepsList.appendChild(li);
+  });
 }
 
 // Run initializer
