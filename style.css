@@ -176,6 +176,7 @@ body {
 .nav-link {
   display: flex;
   align-items: center;
+  position: relative;
   padding: 10px 12px;
   color: var(--text-sidebar);
   text-decoration: none;
@@ -1036,7 +1037,15 @@ body {
 }
 
 /* Sidebar list deletion */
+.sidebar .custom-lists .nav-link {
+  position: relative;
+}
+
 .sidebar-delete-list-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   background: transparent;
   border: none;
   color: var(--text-sidebar-muted);
@@ -1047,7 +1056,6 @@ body {
   align-items: center;
   justify-content: center;
   transition: var(--transition-fast);
-  margin-left: auto;
 }
 
 .sidebar-delete-list-btn:hover {
@@ -1055,9 +1063,10 @@ body {
   background-color: rgba(239, 68, 68, 0.1);
 }
 
-/* Swap count with delete button on hover in sidebar custom list items */
+/* Keep the count badge's space reserved and overlay the delete button on hover,
+   so the list label never shifts or reflows */
 .sidebar .custom-lists .nav-item:hover .nav-count {
-  display: none;
+  visibility: hidden;
 }
 
 .sidebar .custom-lists .nav-item:hover .sidebar-delete-list-btn {

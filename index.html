@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>To Do</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2.5'><polyline points='9 11 12 14 22 4'></polyline><path d='M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'></path></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563eb'/><polyline points='27 52 43 68 73 35' fill='none' stroke='white' stroke-width='11' stroke-linecap='round' stroke-linejoin='round'/></svg>">
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +19,7 @@
       <!-- Sidebar Header -->
       <div class="sidebar-header">
         <div class="brand-container">
-          <svg class="brand-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          <svg class="brand-icon" viewBox="0 0 100 100" width="22" height="22"><rect width="100" height="100" rx="22" fill="#2563eb"/><polyline points="27 52 43 68 73 35" fill="none" stroke="white" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span class="brand-text">To Do</span>
         </div>
         <button class="sidebar-toggle-btn" id="sidebarCollapseBtn" aria-label="Collapse Sidebar">
@@ -95,7 +95,7 @@
 
           <div class="header-actions">
             <!-- Delete Custom List (Hidden for Smart Lists) -->
-            <button class="icon-btn delete-list-btn" id="deleteListBtn" title="Delete List" aria-label="Delete List">
+            <button class="icon-btn delete-list-btn" id="deleteListBtn" title="Delete list" aria-label="Delete list">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </button>
           </div>
@@ -229,14 +229,14 @@
     <div class="modal-card">
       <div class="modal-header">
         <svg class="modal-icon warning" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        <h2>Delete List?</h2>
+        <h2>Delete list?</h2>
       </div>
       <div class="modal-body">
         <p>Are you sure you want to delete this list and all its tasks? This action cannot be undone.</p>
       </div>
       <div class="modal-footer">
         <button class="modal-btn secondary-btn" id="deleteListCancelBtn">Cancel</button>
-        <button class="modal-btn primary-danger-btn" id="deleteListConfirmBtn">Delete List</button>
+        <button class="modal-btn primary-danger-btn" id="deleteListConfirmBtn">Delete list</button>
       </div>
     </div>
   </div>
