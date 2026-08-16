@@ -22,6 +22,7 @@ const defaultState = {
   ],
   activeListId: 'tasks',
   editingTodoId: null,
+  creatingListId: null,
   selectedTodoId: null,
   searchQuery: ''
 };
@@ -37,6 +38,7 @@ function loadState() {
       if (parsed && Array.isArray(parsed.lists) && Array.isArray(parsed.todos)) {
         parsed.searchQuery = '';
         parsed.editingTodoId = null;
+        parsed.creatingListId = null;
         parsed.selectedTodoId = null; // Close detail panel on reload/fresh start
         
         // Migrate legacy default list name from Tasks to All
@@ -84,8 +86,7 @@ const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
 const sidebarExpandBtn = document.getElementById('sidebarExpandBtn');
 const searchInput = document.getElementById('searchInput');
 const customListsContainer = document.getElementById('customListsContainer');
-const newListForm = document.getElementById('newListForm');
-const newListInput = document.getElementById('newListInput');
+const newListBtn = document.getElementById('newListBtn');
 
 const mainContent = document.getElementById('mainContent');
 const activeListTitle = document.getElementById('activeListTitle');
@@ -184,29 +185,23 @@ function setupEventListeners() {
     renderWorkspace();
   });
 
-  // Custom List creation form
-  newListForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = newListInput.value.trim();
-    if (!name) return;
+  // Custom List creation button
+  newListBtn.addEventListener('click', () => {
+    if (state.creatingListId) return;
     
     const id = 'list-' + Date.now();
     state.lists.push({
       id: id,
-      name: name,
+      name: '',
       theme: getRandomTheme(),
       isDefault: false
     });
-    
+
     state.activeListId = id;
-    newListInput.value = '';
+    state.creatingListId = id;
     saveState();
-    render();
-    
-    // Auto collapse sidebar on mobile after selecting list
-    if (window.innerWidth <= 768) {
-      sidebar.classList.remove('show');
-    }
+    renderSidebar();
+    focusNewListInput();
   });
 
   // Built-in lists navigation
@@ -450,6 +445,50 @@ function moveTodoToList(todoId, targetListId) {
   render();
 }
 
+// Focus the inline editor for a list currently being created
+function focusNewListInput() {
+  if (!state.creatingListId) return;
+  const input = customListsContainer.querySelector('.new-list-edit-input');
+  if (input) {
+    input.focus();
+    input.select();
+  }
+}
+
+// Save a freshly created list, or cancel it if the name is empty
+function finalizeNewList(name) {
+  if (!state.creatingListId) return;
+  const listId = state.creatingListId;
+  state.creatingListId = null;
+
+  const list = state.lists.find(l => l.id === listId);
+  if (list && name) {
+    list.name = name;
+  } else {
+    // Empty name -> cancel creation
+    state.lists = state.lists.filter(l => l.id !== listId);
+    if (state.activeListId === listId) {
+      state.activeListId = 'tasks';
+    }
+  }
+
+  saveState();
+  render();
+}
+
+// Cancel list creation and remove the placeholder list
+function cancelNewList() {
+  if (!state.creatingListId) return;
+  const listId = state.creatingListId;
+  state.creatingListId = null;
+  state.lists = state.lists.filter(l => l.id !== listId);
+  if (state.activeListId === listId) {
+    state.activeListId = 'tasks';
+  }
+  saveState();
+  render();
+}
+
 // Navigation list select controller
 function setActiveList(listId) {
   state.activeListId = listId;
@@ -603,6 +642,37 @@ function renderSidebar() {
   
   const customLists = state.lists.filter(l => !l.isDefault);
   customLists.forEach(list => {
+    // Show an inline name editor when this list is being created
+    if (list.id === state.creatingListId) {
+      const li = document.createElement('li');
+      li.className = 'nav-item new-list-edit-row active';
+      li.dataset.listId = list.id;
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'new-list-edit-input';
+      input.placeholder = 'List name';
+      input.autocomplete = 'off';
+      input.setAttribute('aria-label', 'Name your new list');
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          input.blur();
+        } else if (e.key === 'Escape') {
+          cancelNewList();
+        }
+      });
+
+      input.addEventListener('blur', () => {
+        finalizeNewList(input.value.trim());
+      });
+
+      li.appendChild(input);
+      customListsContainer.appendChild(li);
+      return;
+    }
+
     const listCount = state.todos.filter(t => t.listId === list.id && !t.completed).length;
     
     const li = document.createElement('li');
@@ -975,7 +1045,7 @@ function createTodoDOM(todo) {
   detailsBtn.className = 'details-trigger-btn';
   detailsBtn.title = 'Show task details & subtasks';
   detailsBtn.innerHTML = `
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="8" y1="6" x2="21" y2="6"></line>
       <line x1="8" y1="12" x2="21" y2="12"></line>
       <line x1="8" y1="18" x2="21" y2="18"></line>

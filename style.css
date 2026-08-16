@@ -38,6 +38,11 @@
   padding: 0;
 }
 
+svg {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #f3f4f6;
@@ -233,43 +238,56 @@ body {
 }
 
 .custom-lists-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 11px;
   text-transform: uppercase;
   font-weight: 700;
   color: var(--text-sidebar-muted);
   letter-spacing: 0.05em;
-  padding: 0 12px 8px 12px;
+  padding: 0 8px 8px 12px;
 }
 
-/* Sidebar Footer (Add New List) */
-.sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--border-sidebar);
-}
-
-.new-list-form {
-  display: flex;
+.new-list-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   color: var(--text-sidebar-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.new-list-form input {
+.new-list-btn:hover {
+  background-color: var(--bg-sidebar-hover);
+  color: white;
+}
+
+/* Inline new-list edit input (shown while creating a list) */
+.new-list-edit-input {
   width: 100%;
   background: transparent;
   border: none;
   color: white;
   font-family: var(--font-sans);
   font-size: 14px;
-  padding: 4px 0;
-}
-
-.new-list-form input:focus {
+  font-weight: 500;
+  padding: 10px 12px;
   outline: none;
 }
 
-.new-list-form input::placeholder {
+.new-list-edit-input::placeholder {
   color: var(--text-sidebar-muted);
+}
+
+.new-list-edit-row {
+  background-color: var(--bg-sidebar-active);
+  border-radius: var(--border-radius-sm);
 }
 
 /* Floating Expand Trigger for collapsed sidebar */
@@ -669,7 +687,7 @@ body {
   cursor: pointer;
   color: #cbd5e1;
   padding: 6px;
-  border-radius: 50%;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1096,7 +1114,7 @@ body {
   cursor: pointer;
   color: #94a3b8; /* slate 400 - matches Move and Delete action buttons */
   padding: 6px;
-  border-radius: 50%;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1104,7 +1122,7 @@ body {
   margin-left: 8px;
   flex-shrink: 0;
   align-self: flex-start;
-  margin-top: -1px;
+  margin-top: 0;
 }
 
 .details-trigger-btn:hover {
@@ -1181,7 +1199,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 6px;
-  border-radius: 50%;
+  border-radius: 4px;
   transition: var(--transition-fast);
 }
 
@@ -1285,7 +1303,7 @@ body {
   cursor: pointer;
   color: #cbd5e1;
   padding: 6px;
-  border-radius: 50%;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1489,7 +1507,7 @@ body {
   cursor: pointer;
   color: #9ca3af;
   padding: 8px;
-  border-radius: 50%;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;

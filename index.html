@@ -60,19 +60,14 @@
         <!-- Custom User Lists -->
         <div class="custom-lists-header">
           <span>My Lists</span>
+          <button class="new-list-btn" id="newListBtn" title="New list" aria-label="Create new list">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
         </div>
         <ul class="nav-group custom-lists" id="customListsContainer">
           <!-- Dynamically populated -->
         </ul>
       </nav>
-
-      <!-- Sidebar Footer (Add New List) -->
-      <div class="sidebar-footer">
-        <form id="newListForm" class="new-list-form">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <input type="text" id="newListInput" placeholder="New list" autocomplete="off" aria-label="Create new list">
-        </form>
-      </div>
     </aside>
 
     <!-- Sidebar Toggle Floating Trigger (when collapsed) -->
