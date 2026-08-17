@@ -107,7 +107,7 @@ body {
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   transition: var(--transition-fast);
@@ -1537,6 +1537,10 @@ body {
     bottom: 0;
     transform: translateX(-100%);
     box-shadow: 4px 0 25px rgba(0,0,0,0.25);
+  }
+
+  .sidebar-toggle-btn {
+    display: flex;
   }
   
   .sidebar.show {
