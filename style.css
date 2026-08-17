@@ -666,7 +666,7 @@ body {
 
 /* Tag Badge for active list mapping */
 .todo-list-badge {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--primary-blue);
   background-color: rgba(37, 99, 235, 0.08);
@@ -686,7 +686,7 @@ body {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #cbd5e1;
+  color: #94a3b8;
   padding: 6px;
   border-radius: 4px;
   display: flex;
@@ -1005,7 +1005,7 @@ body {
 
 /* Drag and Drop styles */
 .todo-drag-handle {
-  color: #cbd5e1; /* slate 300 */
+  color: #64748b;
   cursor: grab;
   margin-right: 8px;
   display: flex;
@@ -1018,7 +1018,7 @@ body {
 }
 
 .todo-item:hover .todo-drag-handle {
-  color: #94a3b8; /* slate 400 */
+  color: #475569;
 }
 
 .todo-drag-handle:active {
@@ -1026,14 +1026,46 @@ body {
 }
 
 .todo-item.dragging {
-  opacity: 0.4;
-  border: 1px dashed var(--primary-blue);
+  opacity: 0.5;
+  outline: 2px dashed var(--primary-blue);
+  outline-offset: -2px;
+  transform: none !important;
+}
+
+/* While dragging, suppress default hover styles and sub-element pointer events so only 1 unified drop-target style applies */
+body.is-dragging .sidebar .nav-link,
+body.is-dragging .sidebar .nav-icon {
+  transition: none !important;
+}
+
+body.is-dragging .sidebar .nav-link * {
+  pointer-events: none;
+}
+
+body.is-dragging .todo-item {
+  transform: none !important;
+}
+
+body.is-dragging .sidebar-delete-list-btn {
+  display: none !important;
+}
+
+body.is-dragging .sidebar .custom-lists .nav-item:hover .nav-count {
+  visibility: visible !important;
+}
+
+body.is-dragging .nav-link:hover {
+  background-color: transparent;
+}
+
+body.is-dragging .nav-item.active .nav-link:hover {
+  background-color: var(--bg-sidebar-active);
 }
 
 .sidebar .nav-item.drag-hover .nav-link {
-  background-color: var(--bg-sidebar-active);
-  transform: scale(1.02);
-  border: 1px dashed var(--primary-blue);
+  background-color: rgba(37, 99, 235, 0.18) !important;
+  outline: 2px solid var(--primary-blue);
+  outline-offset: -2px;
 }
 
 /* Sidebar list deletion */

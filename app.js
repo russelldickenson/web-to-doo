@@ -314,21 +314,31 @@ function setupEventListeners() {
     const navItem = e.target.closest('.nav-item');
     if (navItem) {
       e.preventDefault(); // crucial to allow drop!
+      e.dataTransfer.dropEffect = 'move';
+      const current = document.querySelector('.sidebar .nav-item.drag-hover');
+      if (current !== navItem) {
+        if (current) current.classList.remove('drag-hover');
+        navItem.classList.add('drag-hover');
+      }
     }
   });
 
   sidebar.addEventListener('dragenter', (e) => {
     const navItem = e.target.closest('.nav-item');
     if (navItem) {
-      document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('drag-hover'));
-      navItem.classList.add('drag-hover');
+      e.preventDefault();
+      const current = document.querySelector('.sidebar .nav-item.drag-hover');
+      if (current !== navItem) {
+        if (current) current.classList.remove('drag-hover');
+        navItem.classList.add('drag-hover');
+      }
     }
   });
 
   sidebar.addEventListener('dragleave', (e) => {
-    const navItem = e.target.closest('.nav-item');
-    if (navItem && (!e.relatedTarget || !navItem.contains(e.relatedTarget))) {
-      navItem.classList.remove('drag-hover');
+    // Only remove if leaving the sidebar completely
+    if (!e.relatedTarget || !sidebar.contains(e.relatedTarget)) {
+      document.querySelectorAll('.sidebar .nav-item.drag-hover').forEach(el => el.classList.remove('drag-hover'));
     }
   });
 
@@ -344,6 +354,8 @@ function setupEventListeners() {
         moveTodoToList(todoId, targetListId);
       }
     }
+    document.querySelectorAll('.sidebar .nav-item.drag-hover').forEach(el => el.classList.remove('drag-hover'));
+    document.body.classList.remove('is-dragging');
   });
 
   // Detail Panel Listeners
@@ -837,10 +849,12 @@ function createTodoDOM(todo) {
     e.dataTransfer.setData('text/plain', todo.id);
     e.dataTransfer.effectAllowed = 'move';
     li.classList.add('dragging');
+    document.body.classList.add('is-dragging');
   });
 
   li.addEventListener('dragend', () => {
     li.classList.remove('dragging');
+    document.body.classList.remove('is-dragging');
     // Clear any drag hovers on sidebar
     document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('drag-hover'));
   });
@@ -942,9 +956,9 @@ function createTodoDOM(todo) {
   badgesContainer.className = 'todo-badges-container';
   let hasBadges = false;
 
-  // Show list badge when in "Starred" smart list or when search is active (tells where task belongs)
+  // Show list badge when in "All", "Starred" smart lists or when search is active (tells where task belongs)
   const isSearching = state.searchQuery && state.searchQuery.trim() !== '';
-  if (state.activeListId === 'important' || isSearching) {
+  if (state.activeListId === 'tasks' || state.activeListId === 'important' || isSearching) {
     const list = state.lists.find(l => l.id === todo.listId);
     if (list) {
       const badge = document.createElement('span');
